@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDD Maps</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Arial,Helvetica,sans-serif;
+    background-image:url("carte-rdd.png");
+}
+
+#app{
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+}
+
+#map{
+    position:absolute;
+    left:0;
+    top:0;
+
+    width:2500px;
+    height:1666px;
+
+    background-image:url("carte-rdd.png.png");
+    background-repeat:no-repeat;
+    background-size:contain;
+    background-position:top left;
+
+    border:3px solid #031856;
+}
+
+#map.drag{
+    cursor:grabbing;
+}
+
+#controls{
+    position:absolute;
+    top:20px;
+    right:20px;
+    z-index:999;
+}
+
+#controls button{
+    width:50px;
+    height:50px;
+    display:block;
+    margin-bottom:10px;
+    border:none;
+    border-radius:10px;
+    background:white;
+    font-size:30px;
+    cursor:pointer;
+    box-shadow:0 5px 15px rgba(0,0,0,.2);
+}
+.marker{
+    position:absolute;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:#ff3b30;
+    border:3px solid #fff;
+    cursor:pointer;
+    box-shadow:0 0 12px rgba(0,0,0,.35);
+    transition:.2s;
+    transform:translate(-50%,-50%);
+}
+
+.marker:hover{
+    transform:translate(-50%,-50%) scale(1.2);
+}
+
+#popup{
+    position:absolute;
+    display:none;
+    min-width:250px;
+    max-width:320px;
+    background:white;
+    border-radius:12px;
+    box-shadow:0 8px 25px rgba(0,0,0,.3);
+    padding:15px;
+    z-index:5000;
+}
+
+#popup::before{
+    content:"";
+    position:absolute;
+    top:-10px;
+    left:25px;
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-bottom:10px solid white;
+}
+
+#popup h2{
+    font-size:20px;
+    margin-bottom:8px;
+}
+
+#popup p{
+    margin-bottom:12px;
+}
+
+#popup button{
+    width:100%;
+    height:40px;
+    border:none;
+    border-radius:8px;
+    background:#031856;
+    color:white;
+    cursor:pointer;
+}
+
+#closePopup{
+    position:absolute;
+    top:6px;
+    right:10px;
+    cursor:pointer;
+    font-size:22px;
+}
+
+.popup{
+    position:absolute;
+    top:45px;
+    left:-110px;
+    width:250px;
+    background:white;
+    border-radius:12px;
+    box-shadow:0 8px 25px rgba(0,0,0,.3);
+    z-index:100;
+}
+
+.popup-content{
+    padding:15px;
+}
+
+.popup::before{
+    content:"";
+    position:absolute;
+    top:-10px;
+    left:120px;
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-bottom:10px solid white;
+}
+
+.popup h2{
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.popup p{
+    margin-bottom:12px;
+}
+
+.popup button{
+    width:100%;
+    height:40px;
+    border:none;
+    border-radius:8px;
+    background:#031856;
+    color:white;
+    cursor:pointer;
+}
+
+.popup-close{
+    position:absolute;
+    right:10px;
+    top:6px;
+    cursor:pointer;
+    font-size:22px;
+}
+</style>
+
+</head>
+<body>
+
+<div id="app">
+
+<div id="controls">
+<button id="plus">+</button>
+<button id="moins">-</button>
+</div>
+
+<div id="map">
+
+<div class="marker"
+style="left: 1900px;top:500px;"
+data-title="🌳 Forêt des Créateurs"
+data-description="Lieu créatifs où naissent les plus grands projet de la République des Doudous.">
+</div>
+
+<div class="marker"
+style="left: 1800px;top:900px;"
+data-title="République Créative"
+data-description="Zone artistiques où les Doudous peuvent exprimer leurs talents.">
+</div>
+
+<div class="marker"
+style="left: 1500px;top:1050px;"
+data-title="🏖️ Plage des Évènements"
+data-description="Le point de rassemblement des jeux et activités.">
+</div>
+
+<div class="marker"
+style="left: 750px;top:800px;"
+data-title="🛏️ Lit des Doudous"
+data-description="Le Coeur de la République des Doudous.">
+</div>
+
+<div class="marker"
+style="left:700px;top:300px;"
+data-title="⛰️ Sommet des Aventuriers"
+data-description="L'objectif de tout les Doudous.">
+</div>
+
+<div class="marker"
+style="left:850px;top:1400px;"
+data-title="🎁 Hotte des Doudous"
+data-description="Maison principale des Doudous.">
+</div>
+
+<div class="marker"
+style="left:2080px;top:1510px;"
+data-title="⚓ Port des Explorateurs"
+data-description="Le départ de toutes les aventures.">
+</div>
+
+<div class="marker"
+style="left:1350px;top:420px;"
+data-title="❤️ Vallée de l'Amitié"
+data-description="Endroit où tout les Doudous se retrouvent.">
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const map=document.getElementById("map");
+
+let scale=1;
+let x=0;
+let y=0;
+
+function render(){
+    map.style.transform=
+    `translate(${x}px,${y}px) scale(${scale})`;
+}
+
+render();
+
+let drag=false;
+
+let startX=0;
+let startY=0;
+
+map.addEventListener("mousedown",e=>{
+
+drag=true;
+
+map.classList.add("drag");
+
+startX=e.clientX-x;
+startY=e.clientY-y;
+
+});
+
+window.addEventListener("mouseup",()=>{
+
+drag=false;
+
+map.classList.remove("drag");
+
+});
+
+window.addEventListener("mousemove",e=>{
+
+if(!drag)return;
+
+x=e.clientX-startX;
+y=e.clientY-startY;
+
+render();
+
+});
+
+document.getElementById("plus").onclick=()=>{
+
+scale*=1.2;
+
+if(scale>5)scale=5;
+
+render();
+
+}
+
+document.getElementById("moins").onclick=()=>{
+
+scale/=1.2;
+
+if(scale<0.2)scale=0.2;
+
+render();
+
+}
+
+window.addEventListener("wheel",e=>{
+
+e.preventDefault();
+
+if(e.deltaY<0){
+
+scale*=1.1;
+
+}else{
+
+scale/=1.1;
+
+}
+
+if(scale<0.2)scale=0.2;
+if(scale>5)scale=5;
+
+render();
+
+},{passive:false});
+
+// Gestion des marqueurs
+document.querySelectorAll(".marker").forEach(marker => {
+
+    marker.addEventListener("click", () => {
+
+        // Supprime les anciennes fenêtres
+        document.querySelectorAll(".marker .popup").forEach(p => p.remove());
+
+        // Crée une nouvelle fenêtre
+        const popup = document.createElement("div");
+        popup.className = "popup";
+
+        popup.innerHTML = `
+            <div class="popup-content">
+                <div class="popup-close">×</div>
+                <h2>${marker.dataset.title}</h2>
+                <p>${marker.dataset.description}</p>
+                <button>Visiter</button>
+            `;
+
+        marker.appendChild(popup);
+
+        popup.querySelector(".popup-close").onclick = () => {
+            popup.remove();
+        };
+
+    });
+
+});
+
+</script>
+
+</body>
+</html>
