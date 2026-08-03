@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carte RDD</title>
+
+<style>
+body{
+    margin:0;
+    background:#031856;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+iframe{
+    width:100vw;
+    height:100vh;
+    border:none;
+}
+
+#mobile{
+    display:none;
+    height:100vh;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:20px;
+    box-sizing:border-box;
+    font-size:30px;
+}
+
+h1{
+    margin-bottom:15px;
+}
+</style>
+</head>
+<body>
+
+<div id="mobile">
+    <div>
+        <h1>❌ Carte indisponible</h1>
+        <p>La Carte de la République des Doudous est uniquement disponible sur ordinateur.</p>
+    </div>
+</div>
+
+<iframe id="pc" src="carte.html"></iframe>
+
+<script>
+const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+
+if(isMobile){
+    document.getElementById("pc").remove();
+    document.getElementById("mobile").style.display = "flex";
+}
+</script>
+
+</body>
+</html>
